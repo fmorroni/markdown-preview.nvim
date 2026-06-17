@@ -10,6 +10,7 @@ import type { Feature } from "./features/types.ts";
 import { codeblocks } from "./features/codeblocks.ts";
 import { linenumbers } from "./features/linenumbers.ts";
 import { images } from "./features/images.ts";
+import { captions } from "./features/captions.ts";
 import { mermaid } from "./features/mermaid.ts";
 
 /**
@@ -19,7 +20,7 @@ import { mermaid } from "./features/mermaid.ts";
  * codeblocks comes before mermaid so mermaid's fence override sits outermost and
  * delegates non-mermaid fences down to the highlighter.
  */
-const FEATURES: Feature[] = [codeblocks, images, linenumbers, mermaid];
+const FEATURES: Feature[] = [codeblocks, images, captions, linenumbers, mermaid];
 
 export function createRenderer(): MarkdownIt {
   const md = new MarkdownIt({

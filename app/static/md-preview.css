@@ -38,6 +38,25 @@ body[data-paused="true"]::after {
   background: transparent;
 }
 
+/* Captioned images: ![alt](path 'caption') → <figure> + <figcaption> */
+.markdown-body figure {
+  margin: 1rem 0;
+  text-align: center;
+}
+
+.markdown-body figure img {
+  display: block;
+  margin: 0 auto;
+  max-width: 100%;
+}
+
+.markdown-body figcaption {
+  margin-top: 0.4rem;
+  font-size: 0.9em;
+  font-style: italic;
+  color: #8b949e;
+}
+
 /* Mermaid diagrams */
 pre.mermaid {
   background: none;

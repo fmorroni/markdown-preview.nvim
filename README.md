@@ -12,6 +12,8 @@ driving a [Deno](https://deno.com) server that renders Markdown with
 - **Diagrams** via Mermaid (` ```mermaid ` fenced blocks).
 - **Callouts / admonitions** — GitHub (`> [!NOTE]`) and Obsidian syntax.
 - **Local images** — relative paths are served straight from disk.
+- **Image captions** — `![alt](path 'caption')` renders a standalone image as a
+  `<figure>` with a `<figcaption>`.
 - **Syntax-highlighted code**, task lists, footnotes, heading anchors.
 - **Offline** — all assets (CSS, fonts, JS) are vendored; no runtime network.
 - **Light / dark** theme following `&background`.
