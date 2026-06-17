@@ -1,0 +1,32 @@
+{
+  "name": "md-preview-server",
+  "version": "0.1.0",
+  "exports": "./src/main.ts",
+  "tasks": {
+    "dev": "deno run -A src/main.ts",
+    "build:server": "deno bundle --platform deno --minify -o dist/server.js src/main.ts",
+    "build:client": "deno bundle --platform browser --minify -o dist/client.js client/index.ts",
+    "vendor": "deno run -A scripts/vendor.ts",
+    "build": "deno task vendor && deno task build:server && deno task build:client"
+  },
+  "imports": {
+    "@std/media-types/content-type": "jsr:@std/media-types@1/content-type",
+    "@std/path/extname": "jsr:@std/path@1/extname",
+    "markdown-it": "npm:markdown-it@14.1.0",
+    "@types/markdown-it": "npm:@types/markdown-it@14.1.2",
+    "@mdit/plugin-katex": "npm:@mdit/plugin-katex@0.22.0",
+    "katex": "npm:katex@0.16.22",
+    "markdown-it-callouts": "npm:markdown-it-callouts@1.1.0",
+    "markdown-it-anchor": "npm:markdown-it-anchor@9.2.0",
+    "markdown-it-task-lists": "npm:markdown-it-task-lists@2.1.1",
+    "markdown-it-footnote": "npm:markdown-it-footnote@4.0.0",
+    "highlight.js": "npm:highlight.js@11.11.1",
+    "mermaid": "npm:mermaid@11.6.0"
+  },
+  "compilerOptions": {
+    "lib": ["deno.window", "dom", "dom.iterable"]
+  },
+  "fmt": {
+    "lineWidth": 100
+  }
+}

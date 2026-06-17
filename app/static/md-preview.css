@@ -1,0 +1,82 @@
+/* Layout + feature styles layered on top of github-markdown-css. */
+
+body {
+  margin: 0;
+  background: var(--mp-bg, #0d1117);
+}
+
+html[data-theme="light"] body {
+  --mp-bg: #ffffff;
+}
+
+.markdown-body {
+  box-sizing: border-box;
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem 60vh; /* trailing space so the last lines can center */
+}
+
+/* Paused indicator (preview detached from the buffer but kept for reuse) */
+body[data-paused="true"]::after {
+  content: "⏸ paused";
+  position: fixed;
+  top: 10px;
+  right: 14px;
+  z-index: 9999;
+  padding: 3px 9px;
+  border-radius: 10px;
+  font: 12px/1.4 system-ui, sans-serif;
+  color: #fff;
+  background: #9e6a03;
+  opacity: 0.85;
+}
+
+/* Code blocks: let github-markdown style the <pre> box; highlight.js only
+   contributes token colours (avoids a nested/mismatched background). */
+.markdown-body pre code.hljs {
+  padding: 0;
+  background: transparent;
+}
+
+/* Mermaid diagrams */
+pre.mermaid {
+  background: none;
+  text-align: center;
+}
+
+/* KaTeX display math shouldn't overflow horizontally without a scrollbar */
+.katex-display {
+  overflow-x: auto;
+  overflow-y: hidden;
+}
+
+/* ── Callouts (GitHub alerts / Obsidian) ──────────────────────────────────── */
+.callout {
+  margin: 1rem 0;
+  padding: 0.5rem 1rem;
+  border-left: 0.25rem solid var(--callout-color, #8b949e);
+  border-radius: 0 6px 6px 0;
+  background: color-mix(in srgb, var(--callout-color, #8b949e) 8%, transparent);
+}
+
+.callout > .callout-title {
+  display: flex;
+  align-items: center;
+  margin: 0.2rem 0 0.4rem;
+  font-size: 1em;
+  font-weight: 600;
+  border-bottom: none;
+  color: var(--callout-color, #8b949e);
+}
+
+.callout > :last-child {
+  margin-bottom: 0;
+}
+
+.callout-note { --callout-color: #1f6feb; }
+.callout-tip { --callout-color: #238636; }
+.callout-important { --callout-color: #8957e5; }
+.callout-warning { --callout-color: #9e6a03; }
+.callout-caution { --callout-color: #da3633; }
+
+html[data-theme="light"] .callout-warning { --callout-color: #bf8700; }
