@@ -8,7 +8,8 @@ import type { Feature } from "./types.ts";
  * Only standalone images (the sole content of their paragraph) are converted, so
  * inline images in the middle of a sentence keep flowing normally (their title
  * just stays a hover tooltip). The title is moved out of the <img> into the
- * caption. Caption text is plain (markdown-it doesn't parse markup in titles).
+ * caption, which is rendered as inline markdown so it supports KaTeX math
+ * (`$…$`), emphasis, links, etc.
  */
 export const captions: Feature = {
   name: "captions",
@@ -37,9 +38,10 @@ export const captions: Feature = {
         // The title becomes the caption, so drop it from the <img>.
         if (img.attrs) img.attrs = img.attrs.filter((a) => a[0] !== "title");
 
-        // Append the <figcaption> after the image, inside the same inline run.
+        // Render the caption as inline markdown (so `$…$` math, emphasis, links
+        // work) and append it after the image inside the same inline run.
         const caption = new state.Token("html_inline", "", 0);
-        caption.content = `<figcaption>${md.utils.escapeHtml(title)}</figcaption>`;
+        caption.content = `<figcaption>${md.renderInline(title, state.env)}</figcaption>`;
         inline.children.push(caption);
       }
       return true;
