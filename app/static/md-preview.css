@@ -9,6 +9,22 @@ html[data-theme="light"] body {
   --mp-bg: #ffffff;
 }
 
+/* Safety-net render error (only when something throws outside KaTeX's own
+   inline error rendering). */
+.md-preview-error {
+  margin: 1rem 2rem;
+  padding: 0.75rem 1rem;
+  border-left: 0.25rem solid #da3633;
+  border-radius: 0 6px 6px 0;
+  background: color-mix(in srgb, #da3633 10%, transparent);
+  color: #da3633;
+}
+
+.md-preview-error pre {
+  margin: 0.4rem 0 0;
+  white-space: pre-wrap;
+}
+
 .markdown-body {
   box-sizing: border-box;
   max-width: 860px;
@@ -67,6 +83,13 @@ pre.mermaid {
 .katex-display {
   overflow-x: auto;
   overflow-y: hidden;
+}
+
+/* Malformed math: show the offending source in red (KaTeX only applies its
+   error colour inline on its own throwOnError path, not via this class). */
+.katex-error {
+  color: #da3633;
+  cursor: help;
 }
 
 /* ── Callouts (GitHub alerts / Obsidian) ──────────────────────────────────── */

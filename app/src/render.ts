@@ -30,7 +30,9 @@ export function createRenderer(): MarkdownIt {
   });
 
   // Third-party markdown-it plugins.
-  md.use(katex)
+  // throwOnError:false → malformed math (common while typing, e.g. `t_`) renders
+  // as an inline red error instead of throwing and crashing the server.
+  md.use(katex, { throwOnError: false })
     // match-type → a bare `> [!NOTE]` shows "Note" as its title (GitHub behaviour).
     .use(callouts, { emptyTitleFallback: "match-type" })
     .use(taskLists, { label: true })
@@ -39,6 +41,28 @@ export function createRenderer(): MarkdownIt {
 
   // Local features last so their renderer overrides win.
   for (const f of FEATURES) f.setup(md);
+
+  // Constrain KaTeX failures to the offending expression. @mdit/plugin-katex
+  // renders ParseErrors inline, but re-throws anything else (and logs to
+  // console.error → an nvim notification); a re-throw would otherwise reach
+  // render()'s catch and blank the whole preview. Wrap the math renderers so any
+  // failure becomes a contained inline error in place, leaving the rest intact.
+  for (const name of ["math_inline", "math_block"] as const) {
+    const original = md.renderer.rules[name];
+    if (!original) continue;
+    md.renderer.rules[name] = (tokens, idx, options, env, self) => {
+      try {
+        return original(tokens, idx, options, env, self);
+      } catch (err) {
+        const message = err instanceof Error ? err.message : String(err);
+        const tex = escapeHtml(tokens[idx].content);
+        if (name === "math_block") {
+          return `<p class="katex-block katex-error" title="${escapeHtml(message)}">${tex}</p>\n`;
+        }
+        return `<span class="katex-error" title="${escapeHtml(message)}">${tex}</span>`;
+      }
+    };
+  }
 
   return md;
 }
@@ -49,8 +73,31 @@ export interface RenderResult {
   html: string;
 }
 
-/** Render markdown text to HTML, resolving local image paths against baseDir. */
+/**
+ * Render markdown text to HTML, resolving local image paths against baseDir.
+ *
+ * Rendering must never throw: a transient error (a half-typed construct some
+ * plugin chokes on) would otherwise bubble up as an unhandled rejection and kill
+ * the server. On failure we surface the message in the preview itself and keep
+ * the process alive.
+ */
 export function render(text: string, baseDir: string): RenderResult {
-  const html = renderer.render(text, { baseDir });
-  return { html };
+  try {
+    return { html: renderer.render(text, { baseDir }) };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    return {
+      html: `<div class="md-preview-error"><strong>Render error</strong><pre>${
+        escapeHtml(message)
+      }</pre></div>`,
+    };
+  }
+}
+
+function escapeHtml(s: string): string {
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
