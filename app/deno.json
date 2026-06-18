@@ -16,7 +16,7 @@
     "@types/markdown-it": "npm:@types/markdown-it@14.1.2",
     "@mdit/plugin-katex": "npm:@mdit/plugin-katex@0.22.0",
     "katex": "npm:katex@0.16.22",
-    "markdown-it-callouts": "npm:markdown-it-callouts@1.1.0",
+    "markdown-it-obsidian-callouts": "npm:markdown-it-obsidian-callouts@0.2.6",
     "markdown-it-anchor": "npm:markdown-it-anchor@9.2.0",
     "markdown-it-task-lists": "npm:markdown-it-task-lists@2.1.1",
     "markdown-it-footnote": "npm:markdown-it-footnote@4.0.0",

@@ -92,33 +92,94 @@ pre.mermaid {
   cursor: help;
 }
 
-/* ── Callouts (GitHub alerts / Obsidian) ──────────────────────────────────── */
+/* ── Callouts (GitHub alerts + Obsidian) — markdown-it-obsidian-callouts ────── */
+/* The plugin emits <div class="callout" data-callout="type"> with a built-in
+   Lucide <svg stroke="currentColor"> icon, so colouring the title colours the
+   icon too. Per-hue palette tuned for contrast on both themes. */
+:root {
+  --cb-blue: #4493f8;
+  --cb-green: #3fb950;
+  --cb-purple: #ab7df8;
+  --cb-amber: #d29922;
+  --cb-red: #f85149;
+  --cb-cyan: #39c5cf;
+  --cb-gray: #8b949e;
+}
+
+html[data-theme="light"] {
+  --cb-blue: #0969da;
+  --cb-green: #1a7f37;
+  --cb-purple: #8250df;
+  --cb-amber: #9a6700;
+  --cb-red: #cf222e;
+  --cb-cyan: #1b7c83;
+  --cb-gray: #6e7781;
+}
+
 .callout {
+  --cb: var(--cb-gray);
   margin: 1rem 0;
   padding: 0.5rem 1rem;
-  border-left: 0.25rem solid var(--callout-color, #8b949e);
+  border-left: 0.25rem solid var(--cb);
   border-radius: 0 6px 6px 0;
-  background: color-mix(in srgb, var(--callout-color, #8b949e) 8%, transparent);
+  background: color-mix(in srgb, var(--cb) 8%, transparent);
 }
 
-.callout > .callout-title {
+.callout-title {
   display: flex;
   align-items: center;
-  margin: 0.2rem 0 0.4rem;
-  font-size: 1em;
+  gap: 0.4rem;
+  margin-bottom: 0.4rem;
+  line-height: 1.3;
   font-weight: 600;
-  border-bottom: none;
-  color: var(--callout-color, #8b949e);
+  color: var(--cb);
 }
 
-.callout > :last-child {
+.callout-title-icon {
+  display: inline-flex;
+  flex: 0 0 auto;
+}
+
+.callout-title-icon svg {
+  width: 1.1em;
+  height: 1.1em;
+}
+
+.callout-content > :last-child {
   margin-bottom: 0;
 }
 
-.callout-note { --callout-color: #1f6feb; }
-.callout-tip { --callout-color: #238636; }
-.callout-important { --callout-color: #8957e5; }
-.callout-warning { --callout-color: #9e6a03; }
-.callout-caution { --callout-color: #da3633; }
+/* Callout type → hue (GitHub names + Obsidian aliases). */
+.callout[data-callout="note"],
+.callout[data-callout="info"],
+.callout[data-callout="todo"] { --cb: var(--cb-blue); }
 
-html[data-theme="light"] .callout-warning { --callout-color: #bf8700; }
+.callout[data-callout="tip"],
+.callout[data-callout="hint"],
+.callout[data-callout="success"],
+.callout[data-callout="check"],
+.callout[data-callout="done"] { --cb: var(--cb-green); }
+
+.callout[data-callout="important"],
+.callout[data-callout="example"] { --cb: var(--cb-purple); }
+
+.callout[data-callout="abstract"],
+.callout[data-callout="summary"],
+.callout[data-callout="tldr"] { --cb: var(--cb-cyan); }
+
+.callout[data-callout="question"],
+.callout[data-callout="help"],
+.callout[data-callout="faq"],
+.callout[data-callout="warning"],
+.callout[data-callout="attention"] { --cb: var(--cb-amber); }
+
+.callout[data-callout="failure"],
+.callout[data-callout="fail"],
+.callout[data-callout="missing"],
+.callout[data-callout="danger"],
+.callout[data-callout="error"],
+.callout[data-callout="bug"],
+.callout[data-callout="caution"] { --cb: var(--cb-red); }
+
+.callout[data-callout="quote"],
+.callout[data-callout="cite"] { --cb: var(--cb-gray); }

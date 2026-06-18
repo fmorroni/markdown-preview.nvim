@@ -1,7 +1,7 @@
 // @ts-types="@types/markdown-it"
 import MarkdownIt from "markdown-it";
 import { katex } from "@mdit/plugin-katex";
-import callouts from "markdown-it-callouts";
+import callouts from "markdown-it-obsidian-callouts";
 import anchor from "markdown-it-anchor";
 import taskLists from "markdown-it-task-lists";
 import footnote from "markdown-it-footnote";
@@ -33,8 +33,8 @@ export function createRenderer(): MarkdownIt {
   // throwOnError:false → malformed math (common while typing, e.g. `t_`) renders
   // as an inline red error instead of throwing and crashing the server.
   md.use(katex, { throwOnError: false })
-    // match-type → a bare `> [!NOTE]` shows "Note" as its title (GitHub behaviour).
-    .use(callouts, { emptyTitleFallback: "match-type" })
+    // GitHub (`> [!NOTE]`) + Obsidian callouts, with built-in icons.
+    .use(callouts)
     .use(taskLists, { label: true })
     .use(footnote)
     .use(anchor, { permalink: false });

@@ -9,8 +9,8 @@
     "npm:highlight.js@11.11.1": "11.11.1",
     "npm:katex@0.16.22": "0.16.22",
     "npm:markdown-it-anchor@9.2.0": "9.2.0_@types+markdown-it@14.1.2_markdown-it@14.1.0",
-    "npm:markdown-it-callouts@1.1.0": "1.1.0",
     "npm:markdown-it-footnote@4.0.0": "4.0.0",
+    "npm:markdown-it-obsidian-callouts@0.2.6": "0.2.6_markdown-it@14.1.0",
     "npm:markdown-it-task-lists@2.1.1": "2.1.1",
     "npm:markdown-it@14.1.0": "14.1.0",
     "npm:mermaid@11.6.0": "11.6.0"
@@ -697,11 +697,14 @@
         "markdown-it"
       ]
     },
-    "markdown-it-callouts@1.1.0": {
-      "integrity": "sha512-hSdLu2QjSOjAyDUfqeUZtBsbb+hcB4X7XH0eSltXPvcIQ9hBbpDAkPJirNZaTzVo3KU//HLuH31WEv2b/LyccA=="
-    },
     "markdown-it-footnote@4.0.0": {
       "integrity": "sha512-WYJ7urf+khJYl3DqofQpYfEYkZKbmXmwxQV8c8mO/hGIhgZ1wOe7R4HLFNwqx7TjILbnC98fuyeSsin19JdFcQ=="
+    },
+    "markdown-it-obsidian-callouts@0.2.6_markdown-it@14.1.0": {
+      "integrity": "sha512-GCsdwEQZU+J8a+F6Gm9igzNMWdj+amkzgKMBbYoAKTkfBiaP1Vf1QkCuD3hj0R6V7qT0r9QwvPxo5AJtQdnx0A==",
+      "dependencies": [
+        "markdown-it"
+      ]
     },
     "markdown-it-task-lists@2.1.1": {
       "integrity": "sha512-TxFAc76Jnhb2OUu+n3yz9RMu4CwGfaT788br6HhEDlvWfdeJcLUsxk1Hgw2yJio0OXsxv7pyIPmvECY7bMbluA=="
@@ -876,8 +879,8 @@
       "npm:highlight.js@11.11.1",
       "npm:katex@0.16.22",
       "npm:markdown-it-anchor@9.2.0",
-      "npm:markdown-it-callouts@1.1.0",
       "npm:markdown-it-footnote@4.0.0",
+      "npm:markdown-it-obsidian-callouts@0.2.6",
       "npm:markdown-it-task-lists@2.1.1",
       "npm:markdown-it@14.1.0",
       "npm:mermaid@11.6.0"
