@@ -84,13 +84,33 @@ function reportClients() {
 })();
 
 // ── HTTP + WebSocket server ──────────────────────────────────────────────────
-Deno.serve({
-  port: args.port ?? 0,
-  hostname: "localhost",
-  onListen: ({ port }) => {
-    console.log(`__MD_PREVIEW_PORT__${port}`);
-  },
-}, (req) => {
+try {
+  Deno.serve({
+    port: args.port ?? 0,
+    hostname: "localhost",
+    onListen: ({ port }) => {
+      console.log(`__MD_PREVIEW_PORT__${port}`);
+    },
+  }, handleRequest);
+} catch (err) {
+  // Binding fails synchronously. The common case is a pinned `port` already
+  // taken by another Neovim instance's server; report it as one line the plugin
+  // can surface verbatim instead of dying with a stack trace on stderr.
+  console.log(`__MD_PREVIEW_ERROR__${listenError(err)}`);
+  Deno.exit(1);
+}
+
+function listenError(err: unknown): string {
+  if (err instanceof Deno.errors.AddrInUse) {
+    return `port ${args.port} is already in use — another Neovim instance is ` +
+      `probably previewing there. Set a different \`port\` (or 0 to pick a free one).`;
+  }
+  const msg = err instanceof Error ? err.message : String(err);
+  // Collapse to a single line: the plugin reads stdout line by line.
+  return `failed to listen on port ${args.port ?? 0}: ${msg.replace(/\s+/g, " ")}`;
+}
+
+function handleRequest(req: Request): Response | Promise<Response> {
   const url = new URL(req.url);
 
   if (req.headers.get("upgrade") === "websocket") {
@@ -136,7 +156,7 @@ Deno.serve({
   }
 
   return new Response("not found", { status: 404 });
-});
+}
 
 // ── helpers ──────────────────────────────────────────────────────────────────
 async function serveFile(path: string, type?: string): Promise<Response> {

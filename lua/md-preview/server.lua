@@ -68,8 +68,9 @@ local function open_browser(url)
   end
 end
 
--- Watch stdout for the port handshake (open the browser once) and for
--- connected-client counts (so we know whether the tab is still open).
+-- Watch stdout for the port handshake (open the browser once), connected-client
+-- counts (so we know whether the tab is still open), and startup failures the
+-- server reports as a single line instead of a stack trace.
 local function on_stdout(_, data)
   local s = server
   if not s then
@@ -87,6 +88,12 @@ local function on_stdout(_, data)
     local clients = line:match("__MD_PREVIEW_CLIENTS__(%d+)")
     if clients then
       s.clients = math.floor(tonumber(clients) or 0)
+    end
+    local err = line:match("__MD_PREVIEW_ERROR__(.+)")
+    if err then
+      vim.schedule(function()
+        vim.notify("md-preview: " .. err, vim.log.levels.ERROR)
+      end)
     end
   end
 end
