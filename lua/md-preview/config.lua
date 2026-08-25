@@ -22,9 +22,10 @@ local defaults = {
   theme = "auto",
   -- Debounce (ms) for sending buffer content as you type.
   debounce = 100,
-  -- Close the preview automatically when its buffer is unloaded.
+  -- Stop the server when the last previewable buffer is unloaded.
   auto_close = true,
-  -- Filetypes the preview functions guard against (open warns otherwise).
+  -- Filetypes the preview handles: `open` warns on anything else, and the
+  -- preview only follows buffers matching one of these.
   filetypes = { "markdown" },
 }
 
@@ -33,6 +34,16 @@ M.options = vim.deepcopy(defaults)
 ---@param opts MarkdownPreview.Config | nil
 function M.setup(opts)
   M.options = vim.tbl_deep_extend("force", vim.deepcopy(defaults), opts or {})
+end
+
+--- Whether a buffer's filetype is one the preview handles.
+---@param bufnr integer
+function M.is_supported(bufnr)
+  if not vim.api.nvim_buf_is_valid(bufnr) then
+    return false
+  end
+  local ft = vim.api.nvim_get_option_value("filetype", { buf = bufnr })
+  return vim.tbl_contains(M.options.filetypes, ft)
 end
 
 --- Resolve the effective theme ("light" or "dark") at call time.

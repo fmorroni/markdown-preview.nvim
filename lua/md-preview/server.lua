@@ -1,5 +1,9 @@
--- Per-buffer Deno server lifecycle: spawn, framed stdin writes, port handshake,
--- browser launch, teardown. Each previewed buffer gets its own server + tab.
+-- Deno server lifecycle: spawn, framed stdin writes, port handshake, browser
+-- launch, teardown.
+--
+-- There is exactly one server (and one browser tab) per Neovim instance. It is
+-- not tied to a buffer: the Lua side decides which buffer's content to feed it
+-- (see autocmds.lua), so switching files reuses the same tab.
 
 local config = require("md-preview.config")
 
@@ -18,8 +22,8 @@ local server_js = app_dir .. "/dist/server.js"
 ---@field opened_at integer?
 ---@field clients integer
 
----@type table<integer, Server>
-local servers = {}
+---@type Server?
+local server = nil
 
 -- Encode a uint32 as 4 big-endian bytes (matches the server's frame decoder).
 local function u32be(n)
@@ -36,21 +40,19 @@ local function frame(obj)
   return u32be(#json) .. json
 end
 
-local function send(bufnr, obj)
-  local s = servers[bufnr]
-  if s and s.job then
-    pcall(vim.fn.chansend, s.job, frame(obj))
+local function send(obj)
+  if server and server.job then
+    pcall(vim.fn.chansend, server.job, frame(obj))
   end
 end
 
-function M.is_running(bufnr)
-  return servers[bufnr] ~= nil
+function M.is_running()
+  return server ~= nil
 end
 
---- Whether at least one browser is currently connected to this buffer's server.
-function M.has_client(bufnr)
-  local s = servers[bufnr]
-  return s ~= nil and (s.clients or 0) > 0
+--- Whether at least one browser is currently connected.
+function M.has_client()
+  return server ~= nil and (server.clients or 0) > 0
 end
 
 local function open_browser(url)
@@ -68,8 +70,8 @@ end
 
 -- Watch stdout for the port handshake (open the browser once) and for
 -- connected-client counts (so we know whether the tab is still open).
-local function on_stdout(bufnr, _, data)
-  local s = servers[bufnr]
+local function on_stdout(_, data)
+  local s = server
   if not s then
     return
   end
@@ -89,12 +91,11 @@ local function on_stdout(bufnr, _, data)
   end
 end
 
----@param bufnr integer
-function M.start(bufnr)
-  -- Already running for this buffer → reuse it. Do NOT re-open the browser:
-  -- that would spawn a duplicate tab. The existing tab stays connected.
-  if servers[bufnr] then
-    return
+--- Spawn the server if it isn't already up. Idempotent: never opens a second
+--- tab. Returns true if a server is running afterwards.
+function M.start()
+  if server then
+    return true
   end
 
   if vim.fn.filereadable(server_js) == 0 then
@@ -105,7 +106,7 @@ function M.start(bufnr)
         .. app_dir,
       vim.log.levels.ERROR
     )
-    return
+    return false
   end
 
   -- Least-privilege: read for assets/images, net pinned to loopback only.
@@ -124,9 +125,7 @@ function M.start(bufnr)
   end
 
   local job = vim.fn.jobstart(cmd, {
-    on_stdout = function(_, data)
-      on_stdout(bufnr, _, data)
-    end,
+    on_stdout = on_stdout,
     on_stderr = function(_, data)
       local msg = table.concat(data, "\n")
       if msg:match("%S") then
@@ -136,7 +135,7 @@ function M.start(bufnr)
       end
     end,
     on_exit = function()
-      servers[bufnr] = nil
+      server = nil
     end,
   })
 
@@ -145,19 +144,19 @@ function M.start(bufnr)
       "md-preview: failed to start Deno (" .. config.options.deno_cmd .. ")",
       vim.log.levels.ERROR
     )
-    return
+    return false
   end
 
-  servers[bufnr] = { job = job, opened = false, clients = 0 }
+  server = { job = job, opened = false, clients = 0 }
   -- Initial state is pushed by the caller (init.open) once the session is set up.
+  return true
 end
 
 --- Re-open the browser tab if the server is up but no browser is connected
 --- (e.g. the user closed the tab manually). No-op while a tab is still open, so
 --- it never creates a duplicate.
----@param bufnr integer
-function M.reopen_if_closed(bufnr)
-  local s = servers[bufnr]
+function M.reopen_if_closed()
+  local s = server
   if not s or not s.url then
     return
   end
@@ -173,31 +172,24 @@ function M.reopen_if_closed(bufnr)
   s.opened_at = vim.uv.now()
 end
 
----@param bufnr integer
-function M.stop(bufnr)
-  local s = servers[bufnr]
-  if not s then
+function M.stop()
+  if not server then
     return
   end
-  pcall(vim.fn.jobstop, s.job)
-  servers[bufnr] = nil
+  pcall(vim.fn.jobstop, server.job)
+  server = nil
 end
 
-function M.stop_all()
-  for bufnr in pairs(servers) do
-    M.stop(bufnr)
-  end
+function M.send_config()
+  send({ type = "config", theme = config.resolve_theme() })
 end
 
-function M.send_config(bufnr)
-  send(bufnr, { type = "config", theme = config.resolve_theme() })
+--- Tell the preview whether a buffer is actively feeding it (false = paused).
+function M.send_status(live)
+  send({ type = "status", live = live })
 end
 
---- Tell the preview whether the buffer is actively feeding it (false = paused).
-function M.send_status(bufnr, live)
-  send(bufnr, { type = "status", live = live })
-end
-
+---@param bufnr integer
 function M.send_content(bufnr)
   if not vim.api.nvim_buf_is_valid(bufnr) then
     return
@@ -205,7 +197,7 @@ function M.send_content(bufnr)
   local lines = vim.api.nvim_buf_get_lines(bufnr, 0, -1, false)
   local name = vim.api.nvim_buf_get_name(bufnr)
   local base_dir = name ~= "" and vim.fn.fnamemodify(name, ":p:h") or vim.fn.getcwd()
-  send(bufnr, {
+  send({
     type = "content",
     text = table.concat(lines, "\n"),
     baseDir = base_dir,
@@ -223,7 +215,7 @@ function M.send_scroll(bufnr, line)
     end
     line = vim.api.nvim_win_get_cursor(win)[1]
   end
-  send(bufnr, { type = "scroll", line = line })
+  send({ type = "scroll", line = line })
 end
 
 return M

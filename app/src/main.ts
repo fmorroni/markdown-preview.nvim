@@ -21,12 +21,21 @@ const ROOT = args.root ?? new URL("..", import.meta.url).pathname;
 interface State {
   html: string;
   baseDir: string;
+  /** Absolute path of the file being previewed ("" for an unsaved buffer). */
+  path: string;
   line: number;
   theme: "light" | "dark";
   live: boolean;
 }
 
-const state: State = { html: "", baseDir: Deno.cwd(), line: 1, theme: "dark", live: true };
+const state: State = {
+  html: "",
+  baseDir: Deno.cwd(),
+  path: "",
+  line: 1,
+  theme: "dark",
+  live: true,
+};
 const sockets = new Set<WebSocket>();
 
 function broadcast(msg: unknown) {
@@ -48,8 +57,9 @@ function reportClients() {
     switch (msg.type) {
       case "content": {
         state.baseDir = msg.baseDir || state.baseDir;
+        state.path = msg.path ?? "";
         state.html = render(msg.text, state.baseDir).html;
-        broadcast({ type: "render", html: state.html });
+        broadcast({ type: "render", html: state.html, path: state.path });
         break;
       }
       case "scroll": {
@@ -91,7 +101,9 @@ Deno.serve({
       // Hydrate the freshly connected browser with current state.
       socket.send(JSON.stringify({ type: "config", theme: state.theme }));
       socket.send(JSON.stringify({ type: "status", live: state.live }));
-      if (state.html) socket.send(JSON.stringify({ type: "render", html: state.html }));
+      if (state.html) {
+        socket.send(JSON.stringify({ type: "render", html: state.html, path: state.path }));
+      }
       socket.send(JSON.stringify({ type: "scroll", line: state.line }));
     };
     socket.onclose = () => {

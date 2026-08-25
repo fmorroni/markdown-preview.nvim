@@ -8,6 +8,10 @@ const content = document.getElementById("content") as HTMLElement;
 
 let currentTheme: "light" | "dark" = "dark";
 let targetLine = 1;
+// The previewed file follows the active Neovim buffer, so both the name and the
+// live/paused state feed the tab title.
+let currentPath = "";
+let isLive = true;
 
 mermaid.initialize({ startOnLoad: false, theme: "dark" });
 
@@ -19,7 +23,9 @@ function connect() {
     const msg = JSON.parse(ev.data);
     switch (msg.type) {
       case "render":
+        currentPath = msg.path ?? currentPath;
         renderHtml(msg.html);
+        updateTitle();
         break;
       case "scroll":
         targetLine = msg.line;
@@ -72,8 +78,14 @@ function applyTheme(theme: "light" | "dark") {
 
 // ── Live/paused status ───────────────────────────────────────────────────────
 function applyStatus(live: boolean) {
+  isLive = live;
   document.body.dataset.paused = live ? "false" : "true";
-  document.title = live ? "Markdown Preview" : "Markdown Preview (paused)";
+  updateTitle();
+}
+
+function updateTitle() {
+  const name = currentPath.slice(currentPath.lastIndexOf("/") + 1);
+  document.title = (name || "Markdown Preview") + (isLive ? "" : " (paused)");
 }
 
 // ── Scroll sync ──────────────────────────────────────────────────────────────

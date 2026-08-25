@@ -7,6 +7,8 @@ driving a [Deno](https://deno.com) server that renders Markdown with
 ## Features
 
 - **Live preview** — updates as you type (debounced).
+- **One tab, every file** — a single server and browser tab that follows the
+  active buffer instead of spawning one per file.
 - **Synchronised scrolling** — the preview follows your cursor.
 - **Math** via KaTeX (`$inline$`, `$$block$$`).
 - **Diagrams** via Mermaid (` ```mermaid ` fenced blocks).
@@ -67,17 +69,25 @@ cd app && deno task build
 ## Usage
 
 The plugin exposes a Lua API only — no user commands — so you can bind it however
-you like. Each function takes an optional `bufnr` (defaults to the current buffer):
+you like:
 
 ```lua
 local mp = require("md-preview")
 
-mp.open()      -- open or resume the preview (reuses the existing tab)
+mp.open(bufnr) -- open or resume the preview, pointed at `bufnr` (default: the
+               -- current buffer); reuses the existing server and tab
 mp.toggle()    -- pause if live & tab open, otherwise open/reopen
 mp.close()     -- pause updates; keeps the server + tab alive for a fast resume
 mp.teardown()  -- fully stop: kill the Deno server (frees the process) without
-               -- unloading the buffer; `open` afterwards starts a fresh tab
+               -- unloading any buffer; `open` afterwards starts a fresh tab
 ```
+
+There is **one** server and **one** browser tab per Neovim instance. Once the
+preview is open it follows you: switching to another previewable buffer re-points
+the same tab at it (the tab title shows the file name). Switching to a buffer the
+preview doesn't handle — a code file, a terminal — leaves the last render on
+screen rather than blanking it, and `close` freezes the preview on its current
+buffer until you `open` again.
 
 Example keymap:
 
@@ -98,7 +108,8 @@ require("md-preview").setup({
   port = 0,                 -- 0 = pick a free port
   theme = "auto",           -- "auto" (follow &background) | "light" | "dark"
   debounce = 100,           -- ms between live updates while typing
-  auto_close = true,        -- stop the server when the buffer is unloaded
+  auto_close = true,        -- stop the server once the last previewable
+                            -- buffer is unloaded
   filetypes = { "markdown" },
 })
 ```
@@ -112,9 +123,10 @@ Neovim (Lua)  ──jobstart──▶  Deno server  ──WebSocket──▶  Br
      └─ stdout: one __MD_PREVIEW_PORT__ line ─┘
 ```
 
-- The Lua side spawns one Deno process **per previewed buffer**, streams the
-  buffer text and cursor line over stdin as length-prefixed JSON frames, and
-  reads the chosen port back from stdout to open the browser.
+- The Lua side spawns **one** Deno process, streams the active buffer's text and
+  cursor line over stdin as length-prefixed JSON frames, and reads the chosen
+  port back from stdout to open the browser. Autocommands track which buffer is
+  active and switch the stream over when you move between files.
 - Deno renders Markdown → HTML with markdown-it (KaTeX and callouts resolve
   server-side; Mermaid finishes in the browser since it needs a DOM), serves the
   page, client bundle, vendored CSS/fonts, and local images, and pushes each
