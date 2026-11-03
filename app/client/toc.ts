@@ -17,6 +17,11 @@ const bars = document.createElement("div");
 bars.className = "toc-bars";
 const panel = document.createElement("div");
 panel.className = "toc-panel";
+// Scrolling happens on an inner list so the scrollbar sits inside the panel's
+// padding instead of on its rounded edge.
+const list = document.createElement("div");
+list.className = "toc-list";
+panel.append(list);
 nav.append(bars, panel);
 document.body.append(nav);
 
@@ -49,7 +54,7 @@ export function updateToc(content: HTMLElement) {
 
 function build() {
   bars.replaceChildren();
-  panel.replaceChildren();
+  list.replaceChildren();
   active = -1;
   entries.forEach((entry, i) => {
     const bar = document.createElement("div");
@@ -72,7 +77,7 @@ function build() {
       entries[i]?.el.scrollIntoView({ behavior: "smooth", block: "start" });
       nav.classList.remove("open");
     });
-    panel.append(item);
+    list.append(item);
   });
 }
 
@@ -96,10 +101,10 @@ function updateActive() {
   }
   if (next === active) return;
   bars.children[active]?.classList.remove("active");
-  panel.children[active]?.classList.remove("active");
+  list.children[active]?.classList.remove("active");
   active = next;
   bars.children[active]?.classList.add("active");
-  panel.children[active]?.classList.add("active");
+  list.children[active]?.classList.add("active");
 }
 
 let scheduled = false;
@@ -116,11 +121,11 @@ globalThis.addEventListener("resize", onViewportChange);
 
 // Bring the current section into view inside a long panel when it opens.
 function revealActive() {
-  const item = panel.children[active] as HTMLElement | undefined;
+  const item = list.children[active] as HTMLElement | undefined;
   if (!item) return;
   const { offsetTop, offsetHeight } = item;
-  if (offsetTop < panel.scrollTop || offsetTop + offsetHeight > panel.scrollTop + panel.clientHeight) {
-    panel.scrollTop = offsetTop - (panel.clientHeight - offsetHeight) / 2;
+  if (offsetTop < list.scrollTop || offsetTop + offsetHeight > list.scrollTop + list.clientHeight) {
+    list.scrollTop = offsetTop - (list.clientHeight - offsetHeight) / 2;
   }
 }
 nav.addEventListener("mouseenter", revealActive);
