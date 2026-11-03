@@ -87,7 +87,7 @@ function reportClients() {
 try {
   Deno.serve({
     port: args.port ?? 0,
-    hostname: "localhost",
+    hostname: args.host ?? "localhost",
     onListen: ({ port }) => {
       console.log(`__MD_PREVIEW_PORT__${port}`);
     },
@@ -107,7 +107,9 @@ function listenError(err: unknown): string {
   }
   const msg = err instanceof Error ? err.message : String(err);
   // Collapse to a single line: the plugin reads stdout line by line.
-  return `failed to listen on port ${args.port ?? 0}: ${msg.replace(/\s+/g, " ")}`;
+  return `failed to listen on ${args.host ?? "localhost"}:${args.port ?? 0}: ${
+    msg.replace(/\s+/g, " ")
+  }`;
 }
 
 function handleRequest(req: Request): Response | Promise<Response> {
@@ -187,11 +189,12 @@ async function serveLocalImage(path: string | null): Promise<Response> {
   }
 }
 
-function parseArgs(argv: string[]): { root?: string; port?: number } {
-  const out: { root?: string; port?: number } = {};
+function parseArgs(argv: string[]): { root?: string; port?: number; host?: string } {
+  const out: { root?: string; port?: number; host?: string } = {};
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--root") out.root = argv[++i];
     else if (argv[i] === "--port") out.port = Number(argv[++i]);
+    else if (argv[i] === "--host") out.host = argv[++i];
   }
   return out;
 }

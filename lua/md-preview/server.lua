@@ -70,6 +70,23 @@ local function open_browser(url)
   end
 end
 
+-- Host to put in the URL the local browser opens. A wildcard address listens
+-- on every interface, loopback included, so open it via localhost.
+---@param host string
+local function url_host(host)
+  if host == "0.0.0.0" or host == "::" then
+    return "localhost"
+  end
+  -- IPv6 literals need brackets in a URL.
+  return host:find(":") and ("[" .. host .. "]") or host
+end
+
+-- Host for Deno's --allow-net, which also wants IPv6 literals bracketed.
+---@param host string
+local function allow_net_host(host)
+  return host:find(":") and ("[" .. host .. "]") or host
+end
+
 -- Watch stdout for the port handshake (open the browser once), connected-client
 -- counts (so we know whether the tab is still open), and startup failures the
 -- server reports as a single line instead of a stack trace.
@@ -82,7 +99,7 @@ local function on_stdout(_, data)
     local port = line:match("__MD_PREVIEW_PORT__(%d+)")
     if port and not s.opened then
       s.port = tonumber(port)
-      s.url = ("http://localhost:%d"):format(s.port)
+      s.url = ("http://%s:%d"):format(url_host(config.options.host), s.port)
       s.opened = true
       open_browser(s.url)
       s.opened_at = vim.uv.now()
@@ -118,16 +135,19 @@ function M.start()
     return false
   end
 
-  -- Least-privilege: read for assets/images, net pinned to loopback only.
-  -- The build step needs internet, but the running server never does.
+  -- Least-privilege: read for assets/images, net pinned to the listen address
+  -- (loopback unless `host` says otherwise). The build step needs internet,
+  -- but the running server never does.
   local cmd = {
     config.options.deno_cmd,
     "run",
     "--allow-read",
-    "--allow-net=localhost",
+    "--allow-net=" .. allow_net_host(config.options.host),
     server_js,
     "--root",
     app_dir,
+    "--host",
+    config.options.host,
   }
   if config.options.port and config.options.port ~= 0 then
     vim.list_extend(cmd, { "--port", tostring(config.options.port) })

@@ -109,6 +109,9 @@ require("md-preview").setup({
                             -- the full command, e.g.
                             -- function(url) return { "brave", "--app=" .. url } end
   port = 0,                 -- 0 = pick a free port
+  host = "localhost",       -- "0.0.0.0" to serve on your network
+                            -- (no auth: anyone who can reach it can view
+                            -- the preview and fetch your image files)
   theme = "auto",           -- "auto" (follow &background) | "light" | "dark"
   debounce = 100,           -- ms between live updates while typing
   auto_close = true,        -- stop the server once the last previewable

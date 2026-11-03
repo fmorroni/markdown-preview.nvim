@@ -4,6 +4,7 @@ local M = {}
 ---@field deno_cmd? string
 ---@field browser? string | string[] | fun(url: string): string[]
 ---@field port? integer
+---@field host? string
 ---@field theme? "auto" | "light" | "dark"
 ---@field debounce? integer
 ---@field auto_close? boolean
@@ -20,6 +21,11 @@ local defaults = {
   browser = nil,
   -- TCP port for the server. 0 → OS picks a free port.
   port = 0,
+  -- Address the server listens on. "localhost" keeps it on this machine;
+  -- "0.0.0.0" (or a LAN IP) makes the preview reachable from your network.
+  -- There is no authentication: anyone who can reach the port can watch the
+  -- preview and fetch image files readable by your user.
+  host = "localhost",
   -- "auto" follows &background; or force "light" / "dark".
   theme = "auto",
   -- Debounce (ms) for sending buffer content as you type.
