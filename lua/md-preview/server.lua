@@ -57,7 +57,9 @@ end
 
 local function open_browser(url)
   local browser = config.options.browser
-  if browser == nil then
+  if type(browser) == "function" then
+    vim.system(browser(url), { detach = true })
+  elseif browser == nil then
     vim.ui.open(url)
   elseif type(browser) == "string" then
     vim.system({ browser, url }, { detach = true })

@@ -2,7 +2,7 @@ local M = {}
 
 ---@class MarkdownPreview.Config
 ---@field deno_cmd? string
----@field browser? string | string[]
+---@field browser? string | string[] | fun(url: string): string[]
 ---@field port? integer
 ---@field theme? "auto" | "light" | "dark"
 ---@field debounce? integer
@@ -14,7 +14,9 @@ local defaults = {
   -- Command used to launch the Deno server.
   deno_cmd = "deno",
   -- How to open the preview. nil → vim.ui.open (system default browser).
-  -- Otherwise a string ("firefox") or list ({ "chromium", "--new-window" }).
+  -- Otherwise a string ("firefox") or list ({ "chromium", "--new-window" }),
+  -- which get the URL appended, or a function(url) returning the full command
+  -- (function(url) return { "brave", "--app=" .. url } end).
   browser = nil,
   -- TCP port for the server. 0 → OS picks a free port.
   port = 0,

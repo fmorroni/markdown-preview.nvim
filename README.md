@@ -105,6 +105,9 @@ require("md-preview").setup({
   deno_cmd = "deno",        -- command to launch the server
   browser = nil,            -- nil = system default (vim.ui.open);
                             -- or "firefox" / { "chromium", "--new-window" }
+                            -- (URL appended), or a function(url) returning
+                            -- the full command, e.g.
+                            -- function(url) return { "brave", "--app=" .. url } end
   port = 0,                 -- 0 = pick a free port
   theme = "auto",           -- "auto" (follow &background) | "light" | "dark"
   debounce = 100,           -- ms between live updates while typing
