@@ -173,12 +173,15 @@ async function serveFile(path: string, type?: string): Promise<Response> {
 async function serveLocalImage(path: string | null): Promise<Response> {
   if (!path) return new Response("missing path", { status: 400 });
   try {
+    // Only images: this endpoint exists for <img src> (see features/images.ts),
+    // and it must not hand out arbitrary files once `host` exposes the server
+    // beyond loopback.
+    const type = contentType(extname(path));
+    if (!type?.startsWith("image/")) return new Response("not an image", { status: 403 });
     const stat = await Deno.stat(path);
     if (!stat.isFile) return new Response("not a file", { status: 404 });
     const file = await Deno.open(path, { read: true });
-    return new Response(file.readable, {
-      headers: { "content-type": contentType(extname(path)) ?? "application/octet-stream" },
-    });
+    return new Response(file.readable, { headers: { "content-type": type } });
   } catch {
     return new Response("not found", { status: 404 });
   }
