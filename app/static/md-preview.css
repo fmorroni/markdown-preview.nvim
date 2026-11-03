@@ -183,3 +183,133 @@ html[data-theme="light"] {
 
 .callout[data-callout="quote"],
 .callout[data-callout="cite"] { --cb: var(--cb-gray); }
+
+/* ── Section index (client/toc.ts) ─────────────────────────────────────────── */
+:root {
+  --toc-bar: #3d444d;
+  --toc-bar-active: #e6edf3;
+  --toc-panel-bg: #151b23;
+  --toc-panel-border: #3d444d;
+  --toc-text: #9198a1;
+  --toc-hover-bg: #262c36;
+  --toc-active: #4493f8;
+}
+
+html[data-theme="light"] {
+  --toc-bar: #d1d9e0;
+  --toc-bar-active: #1f2328;
+  --toc-panel-bg: #ffffff;
+  --toc-panel-border: #d1d9e0;
+  --toc-text: #59636e;
+  --toc-hover-bg: #eff2f5;
+  --toc-active: #0969da;
+}
+
+#toc {
+  position: fixed;
+  top: 50%;
+  right: 2px;
+  z-index: 100;
+  transform: translateY(-50%);
+  font: 14px/1.4 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+}
+
+#toc[hidden] {
+  display: none;
+}
+
+/* Collapsed: one bar per heading. Rows shrink when there are many headings so
+   the column never outgrows the viewport. */
+.toc-bars {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  max-height: 70vh;
+  padding: 4px 6px;
+  cursor: pointer;
+}
+
+.toc-bar {
+  display: flex;
+  align-items: center;
+  flex: 0 1 20px;
+  min-height: 4px;
+  width: 24px;
+}
+
+.toc-bar::before {
+  content: "";
+  width: 100%;
+  height: 2px;
+  border-radius: 1px;
+  background: var(--toc-bar);
+  transition: background 0.15s;
+}
+
+.toc-bar:not([data-depth="0"]) {
+  width: 16px;
+}
+
+.toc-bar.active::before {
+  background: var(--toc-bar-active);
+}
+
+/* Expanded: the panel overlays the bars, centered on the same point, so the
+   pointer stays inside #toc (and :hover holds) while moving onto it. */
+.toc-panel {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: 180px;
+  max-width: min(300px, calc(100vw - 32px));
+  max-height: 80vh;
+  overflow-y: auto;
+  padding: 16px 12px;
+  border: 1px solid var(--toc-panel-border);
+  border-radius: 16px;
+  background: var(--toc-panel-bg);
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.25);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-50%) translateX(8px);
+  transition: opacity 0.15s, transform 0.15s, visibility 0s 0.15s;
+}
+
+#toc:hover .toc-panel,
+#toc.open .toc-panel {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(-50%);
+  transition: opacity 0.15s, transform 0.15s;
+}
+
+.toc-item {
+  display: block;
+  padding: 3px 10px;
+  border-radius: 6px;
+  color: var(--toc-text);
+  text-decoration: none;
+}
+
+.toc-item span {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  overflow: hidden;
+  /* Extra leading keeps accents on capitals (Í, Á) inside the clip box. */
+  line-height: 1.55;
+}
+
+.toc-item:hover {
+  background: var(--toc-hover-bg);
+}
+
+.toc-item.active {
+  color: var(--toc-active);
+}
+
+.toc-item[data-depth="1"] { padding-left: 26px; }
+.toc-item[data-depth="2"] { padding-left: 42px; }
+.toc-item[data-depth="3"] { padding-left: 58px; }

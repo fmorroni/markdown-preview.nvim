@@ -3,6 +3,7 @@
 // with the Neovim cursor line via `data-line` anchors.
 
 import mermaid from "mermaid";
+import { updateToc } from "./toc.ts";
 
 const content = document.getElementById("content") as HTMLElement;
 
@@ -47,6 +48,7 @@ function connect() {
 // ── Rendering ────────────────────────────────────────────────────────────────
 function renderHtml(html: string) {
   content.innerHTML = html;
+  updateToc(content);
   void runMermaid();
   // Re-apply scroll after layout settles so anchors have real offsets.
   requestAnimationFrame(() => scrollToLine(targetLine));
