@@ -125,7 +125,8 @@ function scrollToLine(line: number) {
     const span = target.end - target.start + 1;
     // +0.5 targets the middle of the cursor's line, so a one-line element centers.
     const f = clamp((line - target.start + 0.5) / span, 0, 1);
-    y = target.el.offsetTop + f * target.el.offsetHeight;
+    const box = docBox(target.el);
+    y = box.top + f * box.height;
   } else {
     // Cursor is in a gap between blocks (e.g. a blank line): interpolate between
     // the previous block's bottom and the next block's top.
@@ -139,13 +140,22 @@ function scrollToLine(line: number) {
         break;
       }
     }
-    const gapTop = prev.el.offsetTop + prev.el.offsetHeight;
-    const gapBottom = next.el.offsetTop;
+    const prevBox = docBox(prev.el);
+    const gapTop = prevBox.top + prevBox.height;
+    const gapBottom = docBox(next.el).top;
     const f = clamp((line - prev.end) / Math.max(1, next.start - prev.end), 0, 1);
     y = gapTop + f * Math.max(0, gapBottom - gapTop);
   }
 
   globalThis.scrollTo({ top: y - globalThis.innerHeight / 2, behavior: "smooth" });
+}
+
+// An element's top and height in document coordinates. Not offsetTop: that is
+// relative to the offsetParent, which for anything inside a table (tr, td, th)
+// is the table itself rather than the page.
+function docBox(el: HTMLElement): { top: number; height: number } {
+  const rect = el.getBoundingClientRect();
+  return { top: rect.top + globalThis.scrollY, height: rect.height };
 }
 
 function clamp(n: number, lo: number, hi: number): number {
