@@ -24,7 +24,7 @@ local defaults = {
   -- Address the server listens on. "localhost" keeps it on this machine;
   -- "0.0.0.0" (or a LAN IP) makes the preview reachable from your network.
   -- There is no authentication: anyone who can reach the port can watch the
-  -- preview and fetch image files readable by your user.
+  -- preview and fetch image files under Neovim's cwd (at server start).
   host = "localhost",
   -- "auto" follows &background; or force "light" / "dark".
   theme = "auto",

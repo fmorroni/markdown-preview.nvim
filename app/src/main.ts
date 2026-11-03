@@ -17,6 +17,10 @@ const args = parseArgs(Deno.args);
 // App root: the `app/` directory of the plugin. Static assets and the client
 // bundle are resolved relative to it.
 const ROOT = args.root ?? new URL("..", import.meta.url).pathname;
+// Directory /__local may serve images from (the cwd of the Neovim that started
+// us), resolved once so symlinks in the root itself don't trip the prefix
+// check. Unset → no restriction (e.g. `deno task dev`).
+const IMAGE_ROOT = args.imageRoot ? Deno.realPathSync(args.imageRoot) : undefined;
 
 interface State {
   html: string;
@@ -175,26 +179,45 @@ async function serveFile(path: string, type?: string): Promise<Response> {
 async function serveLocalImage(path: string | null): Promise<Response> {
   if (!path) return new Response("missing path", { status: 400 });
   try {
+    // Resolve symlinks and `..` first, so every check below sees the file that
+    // would actually be read.
+    const real = await Deno.realPath(path);
+    if (!isWithin(real, IMAGE_ROOT)) return new Response("outside image root", { status: 403 });
     // Only images: this endpoint exists for <img src> (see features/images.ts),
     // and it must not hand out arbitrary files once `host` exposes the server
     // beyond loopback.
-    const type = contentType(extname(path));
+    const type = contentType(extname(real));
     if (!type?.startsWith("image/")) return new Response("not an image", { status: 403 });
-    const stat = await Deno.stat(path);
+    const stat = await Deno.stat(real);
     if (!stat.isFile) return new Response("not a file", { status: 404 });
-    const file = await Deno.open(path, { read: true });
+    const file = await Deno.open(real, { read: true });
     return new Response(file.readable, { headers: { "content-type": type } });
   } catch {
     return new Response("not found", { status: 404 });
   }
 }
 
-function parseArgs(argv: string[]): { root?: string; port?: number; host?: string } {
-  const out: { root?: string; port?: number; host?: string } = {};
+/** Whether `path` is `root` or inside it (both already resolved). */
+function isWithin(path: string, root: string | undefined): boolean {
+  if (root === undefined) return true;
+  const prefix = root.endsWith("/") ? root : root + "/";
+  return path === root || path.startsWith(prefix);
+}
+
+interface Args {
+  root?: string;
+  port?: number;
+  host?: string;
+  imageRoot?: string;
+}
+
+function parseArgs(argv: string[]): Args {
+  const out: Args = {};
   for (let i = 0; i < argv.length; i++) {
     if (argv[i] === "--root") out.root = argv[++i];
     else if (argv[i] === "--port") out.port = Number(argv[++i]);
     else if (argv[i] === "--host") out.host = argv[++i];
+    else if (argv[i] === "--image-root") out.imageRoot = argv[++i];
   }
   return out;
 }

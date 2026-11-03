@@ -135,19 +135,24 @@ function M.start()
     return false
   end
 
-  -- Least-privilege: read for assets/images, net pinned to the listen address
-  -- (loopback unless `host` says otherwise). The build step needs internet,
-  -- but the running server never does.
+  -- Local images are only served from Neovim's cwd at server start.
+  local image_root = vim.fn.getcwd()
+
+  -- Least-privilege: read limited to the app's assets and the image root, net
+  -- pinned to the listen address (loopback unless `host` says otherwise). The
+  -- build step needs internet, but the running server never does.
   local cmd = {
     config.options.deno_cmd,
     "run",
-    "--allow-read",
+    "--allow-read=" .. app_dir .. "," .. image_root,
     "--allow-net=" .. allow_net_host(config.options.host),
     server_js,
     "--root",
     app_dir,
     "--host",
     config.options.host,
+    "--image-root",
+    image_root,
   }
   if config.options.port and config.options.port ~= 0 then
     vim.list_extend(cmd, { "--port", tostring(config.options.port) })
